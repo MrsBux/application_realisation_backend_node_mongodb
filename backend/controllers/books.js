@@ -120,3 +120,13 @@ exports.rateBook = (req, res, next) => {
     })
     .catch((error) => res.status(404).json({ message: "Livre non trouvé" }));
 };
+
+exports.getBestRating = (req, res, next) => {
+  Book.find()
+    .then((books) => {
+      books.sort((a, b) => b.averageRating - a.averageRating);
+      const bestRatedBooks = books.slice(0, 3);
+      res.status(200).json(bestRatedBooks);
+    })
+    .catch((error) => res.status(500).json({ error }));
+};

@@ -5,7 +5,6 @@ module.exports = (req, res, next) => {
   if (!req.file) {
     return res.status(400).json({ error: "Please provide an image file" });
   }
-
   const filename = req.file.filename.split(".")[0] + "_" + Date.now() + ".webp";
 
   sharp(req.file.path)
