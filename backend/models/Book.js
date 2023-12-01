@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+//schéma spécifiant la structure des documents de la collection "books".
 const bookSchema = mongoose.Schema({
   userId: { type: String },
   title: { type: String, required: true },
