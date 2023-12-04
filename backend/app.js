@@ -3,17 +3,22 @@ const mongoose = require("mongoose");
 const booksRoutes = require("./routes/books");
 const userRoutes = require("./routes/user");
 const path = require("path");
+require("dotenv").config();
 
+const mongoURI = process.env.MONGODB_URI;
+
+// Connexion à la base de données MongoDB
 mongoose
-  .connect(
-    "mongodb+srv://mrsbux:aze123@cluster0.tdg3fka.mongodb.net/?retryWrites=true&w=majority",
-    { useNewUrlParser: true, useUnifiedTopology: true }
-  )
+  .connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
 const app = express();
 
+// Middleware pour gérer les en-têtes CORS
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -27,10 +32,13 @@ app.use((req, res, next) => {
   next();
 });
 
+//Middleware pour parser le corps des requêtes en JSON
 app.use(express.json());
 
+// Middleware pour servir les images statiques depuis le répertoire 'images'
 app.use("/images", express.static(path.join(__dirname, "images")));
 
+// Routes de base pour les livres et l'authentification des utilisateurs
 app.use("/api/books", booksRoutes);
 app.use("/api/auth", userRoutes);
 

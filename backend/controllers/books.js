@@ -34,6 +34,7 @@ exports.createBook = (req, res, next) => {
 
 // Modification d'un livre par son créateur
 exports.modifyBook = (req, res, next) => {
+  console.log("affiche");
   //Vérification de s'il y a un fichier attaché à la requête
   const bookObject = req.file
     ? {
@@ -47,7 +48,6 @@ exports.modifyBook = (req, res, next) => {
         //sinon création d'un nouvel objet bookObject en copiant données corps requête
         ...req.body,
       };
-
   delete bookObject._userId;
 
   // Recherche du livre à modifier en utilisant son ID
