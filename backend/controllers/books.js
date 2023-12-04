@@ -1,6 +1,6 @@
 // Fichier controllers Books
 const Book = require("../models/Book");
-const fs = require("fs");
+const fs = require("fs-extra");
 
 //Création d'un livre
 exports.createBook = (req, res, next) => {
@@ -34,35 +34,52 @@ exports.createBook = (req, res, next) => {
 
 // Modification d'un livre par son créateur
 exports.modifyBook = (req, res, next) => {
-  console.log("affiche");
-  //Vérification de s'il y a un fichier attaché à la requête
+  // Vérification de s'il y a un fichier attaché à la requête
   const bookObject = req.file
     ? {
-        // si fichier attaché à la requête, conversion la chaîne JSON en un objet js et création d'un nouvel objet js
+        // Si un fichier est attaché à la requête, convertir la chaîne JSON en un objet JavaScript et créer un nouvel objet
         ...JSON.parse(req.body.book),
         imageUrl: `${req.protocol}://${req.get("host")}/images/${
           req.file.filename
         }`,
       }
     : {
-        //sinon création d'un nouvel objet bookObject en copiant données corps requête
+        // Sinon, créer un nouvel objet bookObject en copiant les données du corps de la requête
         ...req.body,
       };
+
   delete bookObject._userId;
 
   // Recherche du livre à modifier en utilisant son ID
   Book.findOne({ _id: req.params.id })
     .then((book) => {
-      // Vérification pou savoir si l'utilisateur authentifié est le propriétaire du livre
+      // Vérification pour savoir si l'utilisateur authentifié est le propriétaire du livre
       if (book.userId != req.auth.userId) {
         res.status(403).json({ message: "Not authorized" });
       } else {
-        // Met à jour le livre avec les nouvelles données
+        const oldImagePath = book.imageUrl;
+
         Book.updateOne(
           { _id: req.params.id },
           { ...bookObject, _id: req.params.id }
         )
-          .then(() => res.status(200).json({ message: "Livre modifié!" }))
+          .then(() => {
+            if (req.file && oldImagePath) {
+              const imageUrlParts = oldImagePath.split("/");
+              const filename = imageUrlParts[imageUrlParts.length - 1];
+              fs.unlink(`images/${filename}`)
+                .then(() => {
+                  console.log("Ancienne image supprimée");
+                  res.status(200).json({ message: "Livre modifié!" });
+                })
+                .catch((err) => {
+                  console.error("Error deleting old image:", err);
+                  res.status(500).json({ error: "Error deleting old image" });
+                });
+            } else {
+              res.status(200).json({ message: "Livre modifié!" });
+            }
+          })
           .catch((error) => res.status(401).json({ error }));
       }
     })
@@ -70,7 +87,6 @@ exports.modifyBook = (req, res, next) => {
       res.status(400).json({ error });
     });
 };
-
 // Suppression d'un livre par son créateur
 exports.deleteBook = (req, res, next) => {
   // Recherche du livre à supprimer en utilisant son ID
